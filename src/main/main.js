@@ -15,6 +15,7 @@ const posterCache = new Store({
 });
 
 let mainWindow;
+let splashWindow;
 const store = new Store({
     name: 'movie-directory-config'
 });
@@ -26,6 +27,28 @@ const VIDEO_FORMATS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv'];
 function isMovieFile(filename) {
     const movieExtensions = ['.mp4', '.mpeg4', '.avi', '.mkv'];
     return movieExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+}
+
+function createSplashWindow() {
+    splashWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        frame: false,
+        backgroundColor: '#000000',
+        show: false
+    });
+
+    const splashPath = path.join(__dirname, '..', 'renderer', 'splash.html');
+    splashWindow.loadFile(splashPath);
+    
+    splashWindow.once('ready-to-show', () => {
+        splashWindow.show();
+        // Auto-transition to main window after 2 seconds
+        setTimeout(() => {
+            createWindow();
+            splashWindow.close();
+        }, 2000);
+    });
 }
 
 function createWindow() {
@@ -41,8 +64,17 @@ function createWindow() {
   mainWindow.loadFile('public/index.html');
 }
 
-app.whenReady().then(() => {
+// Handle splash screen completion
+ipcMain.on('splash-complete', () => {
     createWindow();
+    if (splashWindow) {
+        splashWindow.close();
+        splashWindow = null;
+    }
+});
+
+app.whenReady().then(() => {
+    createSplashWindow();
 
     app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
