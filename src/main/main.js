@@ -10,12 +10,14 @@ const https = require('https');
 
 // Store for caching poster paths
 const posterCache = new Store({
-    name: 'poster-cache',
+    name: 'movie-directory-posters',
     defaults: {}
 });
 
 let mainWindow;
-const store = new Store();
+const store = new Store({
+    name: 'movie-directory-config'
+});
 
 // Supported video formats
 const VIDEO_FORMATS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv'];

@@ -2,7 +2,26 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const Store = require('electron-store');
+// Migrate data from old stores if needed
+const oldStores = [
+    new Store(), // unnamed store
+    new Store({ name: 'movie-directory' }), // previous named store
+];
+
+let hasOldData = false;
+let oldStore = null;
+
+// Find the first store that has profiles data
+for (const store of oldStores) {
+    if (store.has('profiles')) {
+        hasOldData = true;
+        oldStore = store;
+        break;
+    }
+}
+
 const store = new Store({
+    name: 'movie-directory-config',
     defaults: {
         defaultDirectory: '',
         autoScan: false,
@@ -33,6 +52,18 @@ const profileImageSelect = document.getElementById('profileImage');
 const profileCategoriesDiv = document.getElementById('profileCategories');
 const saveProfileButton = document.getElementById('saveProfile');
 const deleteProfileButton = document.getElementById('deleteProfile');
+
+// Migrate data from old store if needed
+if (hasOldData && oldStore) {
+    store.set('profiles', oldStore.get('profiles', []));
+    store.set('lastSelectedProfile', oldStore.get('lastSelectedProfile', null));
+    store.set('defaultDirectory', oldStore.get('defaultDirectory', ''));
+    store.set('autoScan', oldStore.get('autoScan', false));
+    store.set('lastCategory', oldStore.get('lastCategory', 'all'));
+    
+    // Clear old store after migration
+    oldStore.clear();
+}
 
 // Load configuration
 const config = {

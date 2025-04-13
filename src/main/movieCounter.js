@@ -1,5 +1,5 @@
 const Store = require('electron-store');
-const movieStore = new Store({ name: 'movie-counter' });
+const movieStore = new Store({ name: 'movie-directory-counter' });
 
 function getCount(moviePath) {
     return movieStore.get(`counts.${moviePath}`, 0);
