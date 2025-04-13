@@ -5,7 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "version": "npm version patch",
+    "build": "npm run version && electron-builder"
   },
   "author": "",
   "license": "ISC",
@@ -14,7 +15,7 @@
     "electron-builder": "^24.6.4"
   },
   "config": {
-    "arch": "x64"
+    "arch": "arm64" //change to "x64" for Intel
   },
   "dependencies": {
     "electron-store": "^8.1.0",
@@ -31,7 +32,7 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64"]
+          "arch": ["arm64", "x64"]
         }
       ]
     },
