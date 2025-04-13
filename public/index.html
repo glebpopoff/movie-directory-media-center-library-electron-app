@@ -10,6 +10,7 @@
         <div class="tabs">
             <button class="tab-button active" data-tab="movies">Movies</button>
             <button class="tab-button" data-tab="config">Configuration</button>
+            <button class="tab-button" data-tab="profiles">Profiles</button>
         </div>
         
         <div class="tab-content" id="moviesTab">
@@ -38,6 +39,45 @@
                     <input type="checkbox" id="autoScan">
                 </div>
                 <button id="saveConfig" class="save-button">Save Configuration</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="profilesTab" style="display: none;">
+            <div class="profiles-section">
+                <h2>Profile Management</h2>
+                
+                <div class="profile-selector">
+                    <label for="profileSelect">Select Profile:</label>
+                    <select id="profileSelect">
+                        <option value="" disabled selected>Choose a profile</option>
+                    </select>
+                </div>
+
+                <div class="profile-editor">
+                    <div class="profile-item">
+                        <label for="profileName">Profile Name:</label>
+                        <input type="text" id="profileName" placeholder="Enter profile name">
+                    </div>
+
+                    <div class="profile-item">
+                        <label for="profileImage">Profile Image:</label>
+                        <select id="profileImage">
+                            <option value="" disabled selected>Select an image</option>
+                        </select>
+                    </div>
+
+                    <div class="profile-item">
+                        <label>Available Categories:</label>
+                        <div id="profileCategories" class="category-list">
+                            <!-- Categories will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button id="saveProfile" class="save-button">Save Profile</button>
+                        <button id="deleteProfile" class="delete-button">Delete Profile</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

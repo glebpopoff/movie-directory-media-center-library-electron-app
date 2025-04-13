@@ -160,6 +160,17 @@ async function scanDirectory(directory) {
 }
 
 // IPC handlers
+ipcMain.handle('get-profile-images', async () => {
+    const profileImagesDir = path.join(__dirname, '..', '..', 'profile-images');
+    try {
+        const files = await fsPromises.readdir(profileImagesDir);
+        return files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file));
+    } catch (error) {
+        console.error('Error reading profile images:', error);
+        return [];
+    }
+});
+
 ipcMain.handle('select-directory', async () => {
     try {
         const result = await dialog.showOpenDialog({
@@ -182,6 +193,11 @@ ipcMain.handle('select-directory', async () => {
 });
 
 ipcMain.handle('get-categories', async (event, directory) => {
+    console.log('Getting categories for directory:', directory);
+    if (!directory) {
+        console.warn('No directory provided to get-categories');
+        return [];
+    }
     try {
         if (!directory) {
             console.error('No directory provided');

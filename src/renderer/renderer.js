@@ -6,7 +6,9 @@ const store = new Store({
     defaults: {
         defaultDirectory: '',
         autoScan: false,
-        lastCategory: 'all'
+        lastCategory: 'all',
+        profiles: [],
+        lastSelectedProfile: null
     }
 });
 
@@ -24,16 +26,216 @@ const selectDefaultDirectoryButton = document.getElementById('selectDefaultDirec
 const autoScanCheckbox = document.getElementById('autoScan');
 const saveConfigButton = document.getElementById('saveConfig');
 
+// Profile elements
+const profileSelect = document.getElementById('profileSelect');
+const profileNameInput = document.getElementById('profileName');
+const profileImageSelect = document.getElementById('profileImage');
+const profileCategoriesDiv = document.getElementById('profileCategories');
+const saveProfileButton = document.getElementById('saveProfile');
+const deleteProfileButton = document.getElementById('deleteProfile');
+
 // Load configuration
 const config = {
     defaultDirectory: store.get('defaultDirectory'),
     autoScan: store.get('autoScan'),
-    lastCategory: store.get('lastCategory', 'all')
+    lastCategory: store.get('lastCategory', 'all'),
+    profiles: store.get('profiles', []),
+    lastSelectedProfile: store.get('lastSelectedProfile')
 };
 
 // Initialize UI with stored values
 defaultDirectoryInput.value = config.defaultDirectory;
 autoScanCheckbox.checked = config.autoScan;
+
+// Load profile images
+async function loadProfileImages() {
+    const images = await ipcRenderer.invoke('get-profile-images');
+    profileImageSelect.innerHTML = '';
+    images.forEach(image => {
+        const option = document.createElement('option');
+        option.value = image;
+        option.textContent = image.replace(/\.[^/.]+$/, '');
+        profileImageSelect.appendChild(option);
+    });
+}
+
+// Initialize profiles
+async function initializeProfiles() {
+    profileSelect.innerHTML = '';
+    config.profiles.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.name;
+        option.textContent = profile.name;
+        profileSelect.appendChild(option);
+    });
+
+    if (config.lastSelectedProfile) {
+        profileSelect.value = config.lastSelectedProfile;
+        await loadProfileDetails(config.lastSelectedProfile);
+    }
+
+    // Load categories for new profile creation
+    if (config.defaultDirectory) {
+        await updateProfileCategoryCheckboxes([]);
+    }
+}
+
+// Load profile details
+async function loadProfileDetails(profileName) {
+    const profile = config.profiles.find(p => p.name === profileName);
+    if (profile) {
+        profileNameInput.value = profile.name;
+        profileImageSelect.value = profile.image;
+        
+        // Update category checkboxes
+        await updateProfileCategoryCheckboxes(profile.categories);
+    }
+}
+
+// Update category checkboxes
+async function updateProfileCategoryCheckboxes(selectedCategories = []) {
+    const categories = await ipcRenderer.invoke('get-categories', config.defaultDirectory);
+    profileCategoriesDiv.innerHTML = '';
+    
+    categories.forEach(category => {
+        const div = document.createElement('div');
+        div.className = 'category-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `category-${category}`;
+        checkbox.value = category;
+        checkbox.checked = selectedCategories.includes(category);
+        
+        const label = document.createElement('label');
+        label.htmlFor = `category-${category}`;
+        label.textContent = category;
+        
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        profileCategoriesDiv.appendChild(div);
+    });
+}
+
+// Save profile
+async function saveProfile() {
+    const name = profileNameInput.value.trim();
+    if (!name) {
+        alert('Please enter a profile name');
+        return;
+    }
+
+    const image = profileImageSelect.value;
+    const selectedCategories = Array.from(profileCategoriesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+
+    const existingProfileIndex = config.profiles.findIndex(p => p.name === name);
+    const profile = { name, image, categories: selectedCategories };
+
+    if (existingProfileIndex >= 0) {
+        config.profiles[existingProfileIndex] = profile;
+    } else {
+        config.profiles.push(profile);
+    }
+
+    store.set('profiles', config.profiles);
+    initializeProfiles();
+    alert('Profile saved successfully!');
+}
+
+// Delete profile
+function deleteProfile() {
+    const name = profileSelect.value;
+    if (!name) return;
+
+    if (confirm(`Are you sure you want to delete profile "${name}"?`)) {
+        config.profiles = config.profiles.filter(p => p.name !== name);
+        store.set('profiles', config.profiles);
+        if (config.lastSelectedProfile === name) {
+            config.lastSelectedProfile = null;
+            store.set('lastSelectedProfile', null);
+        }
+        initializeProfiles();
+        profileNameInput.value = '';
+        updateProfileCategoryCheckboxes([]);
+    }
+}
+
+// Event listeners for profile management
+profileSelect.addEventListener('change', async (e) => {
+    await loadProfileDetails(e.target.value);
+});
+
+saveProfileButton.addEventListener('click', saveProfile);
+deleteProfileButton.addEventListener('click', deleteProfile);
+
+// Initialize UI with stored values
+defaultDirectoryInput.value = config.defaultDirectory;
+autoScanCheckbox.checked = config.autoScan;
+loadProfileImages();
+initializeProfiles();
+
+// Function to show profile selection dialog
+async function showProfileSelector() {
+    const profiles = config.profiles;
+    if (profiles.length === 0) {
+        alert('No profiles found. Please create a profile in the Profiles tab first.');
+        const profilesTab = document.querySelector('[data-tab="profiles"]');
+profilesTab.click();
+// Initialize categories for new profile
+if (config.defaultDirectory) {
+    await updateProfileCategoryCheckboxes([]);
+}
+        return;
+    }
+
+    const profileName = await new Promise((resolve) => {
+        const dialog = document.createElement('div');
+        dialog.className = 'profile-dialog';
+        dialog.innerHTML = `
+            <div class="profile-dialog-content">
+                <h2>Select Profile</h2>
+                <div class="profile-dialog-selection">
+                    <div class="profile-dialog-image">
+                        <img id="profileDialogImage" src="../profile-images/${profiles[0].image}" alt="Profile">
+                    </div>
+                    <select id="profileDialogSelect">
+                        ${profiles.map(p => `<option value="${p.name}" data-image="${p.image}">${p.name}</option>`).join('')}
+                    </select>
+                </div>
+                <button id="profileDialogConfirm">Continue</button>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+
+        const select = dialog.querySelector('#profileDialogSelect');
+        const button = dialog.querySelector('#profileDialogConfirm');
+        const profileImage = dialog.querySelector('#profileDialogImage');
+
+        // Update image when selection changes
+        select.addEventListener('change', () => {
+            const selectedOption = select.options[select.selectedIndex];
+            const imagePath = selectedOption.getAttribute('data-image');
+            profileImage.src = `../profile-images/${imagePath}`;
+        });
+
+        button.addEventListener('click', () => {
+            const selectedProfile = select.value;
+            document.body.removeChild(dialog);
+            resolve(selectedProfile);
+        });
+    });
+
+    if (profileName) {
+        config.lastSelectedProfile = profileName;
+        store.set('lastSelectedProfile', profileName);
+        const profile = config.profiles.find(p => p.name === profileName);
+        if (profile) {
+            await updateCategories(config.defaultDirectory, profile.categories);
+        }
+    }
+}
 
 // Check for default directory and load categories
 if (!config.defaultDirectory) {
@@ -52,11 +254,11 @@ if (!config.defaultDirectory) {
     moviesGrid.appendChild(selectButton);
 } else {
     console.log('Loading categories from:', config.defaultDirectory);
-    updateCategories(config.defaultDirectory);
+    showProfileSelector();
 }
 
 // Function to update categories dropdown
-async function updateCategories(directory) {
+async function updateCategories(directory, profileCategories = null) {
     try {
         if (!directory) {
             console.warn('No directory provided to updateCategories');
@@ -103,7 +305,7 @@ async function updateCategories(directory) {
 
         // Add categories to dropdown
         categories.forEach(category => {
-            if (typeof category === 'string') {
+            if (typeof category === 'string' && (!profileCategories || profileCategories.includes(category))) {
                 const option = document.createElement('option');
                 option.value = category;
                 option.textContent = category;

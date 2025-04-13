@@ -15,7 +15,7 @@
     "electron-builder": "^24.6.4"
   },
   "config": {
-    "arch": "arm64" //change to "x64" for Intel
+    "arch": "arm64"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
