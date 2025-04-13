@@ -499,7 +499,7 @@ async function displayDirectoryContent(category, filterText = '') {
         updateMovieGrid(filtered, gridContainer);
 
         // Helper function to update movie grid
-        function updateMovieGrid(movies) {
+        async function updateMovieGrid(movies) {
             // Clear existing movies
             gridContainer.innerHTML = '';
             
@@ -515,7 +515,7 @@ async function displayDirectoryContent(category, filterText = '') {
             }
 
             // Display movies
-            movies.forEach(movie => {
+            for (const movie of movies) {
                 const movieCard = document.createElement('div');
                 movieCard.className = 'movie-card';
                 movieCard.dataset.name = movie.name;
@@ -583,8 +583,22 @@ async function displayDirectoryContent(category, filterText = '') {
                 const playButton = document.createElement('button');
                 playButton.className = 'action-button play';
                 playButton.innerHTML = '<i class="fas fa-play"></i>';
-                playButton.onclick = () => ipcRenderer.invoke('play-in-vlc', movie.path);
+                
+                // Create count display
+                const countSpan = document.createElement('span');
+                countSpan.className = 'play-count';
+                const count = await ipcRenderer.invoke('get-movie-count', movie.path);
+                countSpan.textContent = count;
+                
+                // Update play button handler
+                playButton.onclick = async () => {
+                    await ipcRenderer.invoke('play-in-vlc', movie.path);
+                    const newCount = await ipcRenderer.invoke('increment-movie-count', movie.path);
+                    countSpan.textContent = newCount;
+                };
+                
                 actions.appendChild(playButton);
+                actions.appendChild(countSpan);
                 
                 // Assemble movie card
                 movieCard.appendChild(thumbnailContainer);
@@ -592,7 +606,7 @@ async function displayDirectoryContent(category, filterText = '') {
                 movieCard.appendChild(actions);
                 
                 gridContainer.appendChild(movieCard);
-            });
+            }
         }
 
     } catch (error) {

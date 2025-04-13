@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { getCount, incrementCount } = require('./movieCounter');
 const fsPromises = fs.promises;
 const { exec } = require('child_process');
 const Store = require('electron-store');
@@ -441,6 +442,15 @@ ipcMain.handle('open-in-finder', async (event, dirPath) => {
         console.error('Error opening Finder:', error);
         return false;
     }
+});
+
+// Movie counter handlers
+ipcMain.handle('get-movie-count', async (event, moviePath) => {
+    return getCount(moviePath);
+});
+
+ipcMain.handle('increment-movie-count', async (event, moviePath) => {
+    return incrementCount(moviePath);
 });
 
 ipcMain.handle('scan-directory', async (event, directory) => {
