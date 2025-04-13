@@ -1,6 +1,6 @@
 {
   "name": "movie-directory-2",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Movie Directory Application",
   "main": "src/main/main.js",
   "scripts": {
@@ -32,7 +32,9 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
