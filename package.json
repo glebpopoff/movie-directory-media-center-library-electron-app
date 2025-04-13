@@ -1,7 +1,7 @@
 {
-  "name": "movie-directory-2",
+  "name": "family-movie-library",
   "version": "1.0.2",
-  "description": "Movie Directory Application",
+  "description": "Family Movie Library Application",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.movieplayer.app2",
-    "productName": "Movie Directory 2",
+    "productName": "Family Movie Library",
     "mac": {
       "icon": "build/icon.icns",
       "darkModeSupport": true,
