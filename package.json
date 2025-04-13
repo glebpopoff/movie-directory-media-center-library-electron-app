@@ -1,6 +1,6 @@
 {
   "name": "family-movie-library",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Family Movie Library Application",
   "main": "src/main/main.js",
   "scripts": {
@@ -12,7 +12,8 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "11.0.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+    "electron-rebuild": "^3.2.7"
   },
   "config": {
     "arch": "x64"
@@ -29,6 +30,7 @@
       "icon": "build/icon.icns",
       "darkModeSupport": true,
       "minimumSystemVersion": "10.12.0",
+      "x64ArchFiles": "**/*",
       "target": [
         {
           "target": "dmg",
